@@ -1,0 +1,12 @@
+{
+    "name": "andry/google-api-php-client-master",
+    "authors": [
+        {
+            "name": "Andry",
+            "email": "_andry__@ukr.net"
+        }
+    ],
+    "require": {
+        "google/apiclient": "2.7"
+    }
+}
