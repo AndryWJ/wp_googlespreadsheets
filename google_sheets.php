@@ -6,7 +6,6 @@ Author: Ivanochko Andrii
 Description: Використання гугл таблиць
 */
 
-
 defined('ABSPATH') or die("Hey! this not allowed");
 
 define( 'PLUGIN_NAME_SHEATS', 'google_sheets');
@@ -19,17 +18,18 @@ define( 'PLUGIN_URL_SHEATS', plugins_url().'/'.(PLUGIN_NAME_SHEATS).'/');
 class googleSheets {
     static $debug = true;
     static $settings = [];
-    static $token_path;
     static $is_token = false;
+    static $token_path;
     static $first_start = true;
+    static $google_sheets_API;
 
     static function init(){
-        self::$token_path = PLUGIN_DIR_SHEATS . '/tokens/';
-
+        require_once PLUGIN_DIR_SHEATS . '/modules/API/API.php';
+        self::$token_path = PLUGIN_DIR_SHEATS . '/modules/API/tokens/';
+        self::$google_sheets_API = new google_sheets_API(self::$token_path);
         register_activation_hook(PLUGIN_FILE_SHEATS,array(PLUGIN_CLASS_NAME_SHEATS,'activation_hook'));
         self::set_default_options();
         require_once PLUGIN_DIR_SHEATS . '/modules/settings_page/settings_page.php';
-        require_once PLUGIN_DIR_SHEATS . '/includes/google-api-php-client-master/vendor/autoload.php';
         add_filter( 'plugin_action_links', array(PLUGIN_CLASS_NAME_SHEATS,'plugin_action_links'), 10, 2 );
 
         self::add_route_init_google();
@@ -37,80 +37,8 @@ class googleSheets {
 
     static function getClient()
     {
-        
-        $client = new Google_Client();
-        $client->setApplicationName('Google Sheets API PHP Quickstart');
-        $client->setScopes([
-            Google_Service_Sheets::SPREADSHEETS,
-            Google_Service_Sheets::DRIVE,
-            Google_Service_Sheets::DRIVE_FILE
-        ]);
-        $client->setIncludeGrantedScopes(true);
-        $client->setAuthConfig(self::$token_path.'credentials.json');
-        $client->setAccessType('offline');
-        $client->setPrompt('select_account consent');
-
-        $tokenPath = self::$token_path.'token.json';
-        
-        if (file_exists($tokenPath)){
-            $accessToken = json_decode(file_get_contents($tokenPath), true);
-            $client->setAccessToken($accessToken);
-        }
-
-        if ($client->isAccessTokenExpired()) {
-
-            if ($client->getRefreshToken()) {
-                $client->fetchAccessTokenWithRefreshToken($client->getRefreshToken());
-            } else {
-
-                $authUrl = $client->createAuthUrl();
-                if(isset($_GET['step'])){
-                    printf("Перейдите по <a href=\"%s\">ссылке</a> чтобы разрешить приложению доступ к таблицам!", $authUrl);
-                }
-
-                $authCode = (isset($_GET['code']))?$_GET['code']:'';
-                if(empty($authCode)) return;
-
-                $accessToken = $client->fetchAccessTokenWithAuthCode($authCode);
-                $client->setAccessToken($accessToken);
-
-                if (array_key_exists('error', $accessToken)) {
-                    throw new Exception(join(', ', $accessToken));
-                }
-            }
-
-            if (!file_exists(dirname($tokenPath))) {
-                mkdir(dirname($tokenPath), 0700, true);
-            }
-            file_put_contents($tokenPath, json_encode($client->getAccessToken()));
-        }
-        return $client;
+        return self::$google_sheets_API->getClient();
     }
-
-
-    /**
-     * [insert_row description]
-     *
-     * @param   [type]  $table_id  [ID таблиці в яку вставляємо ряд]
-     * @param   [type]  $data      [Масив данних які будуть записані в ряд таблиці]
-     *
-     * @return  [type]             [return відповідь від гугла]
-     */
-    static function insert_row($table_id,$data){
-        $client = googleSheets::getClient(); 
-        if(is_a($client,'Google_Client')){
-            $service = new Google_Service_Sheets($client);
-            $spreadsheetId = $table_id;
-            $range = 'A1';
-            $requestBody = new Google_Service_Sheets_ValueRange();
-            $requestBody->setValues(['values'=>$data]);
-            $response = $service->spreadsheets_values->append($spreadsheetId, $range, $requestBody, ['valueInputOption'=>'RAW']);
-            return $response;
-        }else{
-            return "Помилка запису в таблицю!";
-        };
-    }
-
 
     static function add_route_init_google(){
 
