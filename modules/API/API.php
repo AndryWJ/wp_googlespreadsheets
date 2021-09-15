@@ -1,5 +1,5 @@
 <?php
-require_once 'google-api-php-client-master/vendor/autoload.php';
+require 'google-api-php-client-master/vendor/autoload.php';
 
 class google_sheets_API{
     private $token_path;
@@ -10,19 +10,22 @@ class google_sheets_API{
         $this->token_path = $token_path;
     }
 
-    function getClient()
+    function getClient($redirect = '')
     {
         if(is_a($this->client,'Google_Client')){ return $this->client; };
         $this->client = new Google_Client();
         
-        $this->client->setApplicationName('Google Sheets API PHP Quickstart');
+        $this->client->setApplicationName('Google Sheets API PHP');
         $this->client->setScopes([
             Google_Service_Sheets::SPREADSHEETS,
             Google_Service_Sheets::DRIVE,
             Google_Service_Sheets::DRIVE_FILE
         ]);
+        
         $this->client->setIncludeGrantedScopes(true);
         $this->client->setAuthConfig($this->token_path.'credentials.json');
+        if(empty($redirect)){ $redirect = 'http://'.$_SERVER['HTTP_HOST'].'/google_sheets/'; }
+        $this->client->setRedirectUri($redirect);
         $this->client->setAccessType('offline');
         $this->client->setPrompt('select_account consent');
         
