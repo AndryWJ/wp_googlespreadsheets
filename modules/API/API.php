@@ -1,5 +1,5 @@
 <?php
-require 'google-api-php-client-master/vendor/autoload.php';
+require_once 'google-api-php-client-master/vendor/autoload.php';
 
 class google_sheets_API{
     private $token_path;
@@ -24,7 +24,7 @@ class google_sheets_API{
         
         $this->client->setIncludeGrantedScopes(true);
         $this->client->setAuthConfig($this->token_path.'credentials.json');
-        if(empty($redirect)){ $redirect = 'http://'.$_SERVER['HTTP_HOST'].'/google_sheets/'; }
+        if(empty($redirect)){ $redirect = 'https://'.$_SERVER['HTTP_HOST'].'/google_sheets/'; }
         $this->client->setRedirectUri($redirect);
         $this->client->setAccessType('offline');
         $this->client->setPrompt('select_account consent');
@@ -36,11 +36,11 @@ class google_sheets_API{
             $accessToken = json_decode(file_get_contents($tokenPath), true);
             $this->client->setAccessToken($accessToken);
         }else if(!isset($_GET['step'])){ echo "Токен не існує!"; }
-
+        
         if ($this->client->isAccessTokenExpired()) {
-
             if ($this->client->getRefreshToken()) {
                 $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
+                return 'fdsfsdsdf';
             } else {
 
                 $authUrl = $this->client->createAuthUrl();
