@@ -40,7 +40,6 @@ class google_sheets_API{
         if ($this->client->isAccessTokenExpired()) {
             if ($this->client->getRefreshToken()) {
                 $this->client->fetchAccessTokenWithRefreshToken($this->client->getRefreshToken());
-                return 'fdsfsdsdf';
             } else {
 
                 $authUrl = $this->client->createAuthUrl();
